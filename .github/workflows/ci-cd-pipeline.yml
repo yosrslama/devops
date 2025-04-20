@@ -1,0 +1,121 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy-user-service:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🔁 Checkout du code
+        uses: actions/checkout@v3
+
+      - name: 🚀 Setup Node.js (Version 20.x)
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+
+      - name: 📦 Installer les dépendances pour User Service
+        working-directory: ./user-service
+        run: npm install
+
+      - name: 🧪 Exécuter les tests pour User Service
+        working-directory: ./user-service
+        run: npm test
+
+      - name: 🚀 Déployer User Service
+        working-directory: ./user-service
+        run: |
+          echo "Déploiement du microservice User"
+
+  build-and-deploy-salle-service:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🔁 Checkout du code
+        uses: actions/checkout@v3
+
+      - name: 🚀 Setup Node.js (Version 20.x)
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+
+      - name: 📦 Installer les dépendances pour Salle Service
+        working-directory: ./salle-service
+        run: npm install
+
+      - name: 🧪 Exécuter les tests pour Salle Service
+        working-directory: ./salle-service
+        run: npm test
+
+      - name: 🚀 Déployer Salle Service
+        working-directory: ./salle-service
+        run: |
+          echo "Déploiement du microservice Salle"
+
+  build-and-deploy-reservation-service:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🔁 Checkout du code
+        uses: actions/checkout@v3
+
+      - name: 🚀 Setup Node.js (Version 20.x)
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+
+      - name: 📦 Installer les dépendances pour Reservation Service
+        working-directory: ./reservation-service
+        run: npm install
+
+      - name: 🧪 Exécuter les tests pour Reservation Service
+        working-directory: ./reservation-service
+        run: npm test
+
+      - name: 🚀 Déployer Reservation Service
+        working-directory: ./reservation-service
+        run: |
+          echo "Déploiement du microservice Reservation"
+
+  build-and-deploy-auth-service:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🔁 Checkout du code
+        uses: actions/checkout@v3
+
+      - name: 🚀 Setup Node.js (Version 20.x)
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+
+      - name: 📦 Installer les dépendances pour Auth Service
+        working-directory: ./auth-service
+        run: npm install
+
+      - name: 🧪 Exécuter les tests pour Auth Service
+        working-directory: ./auth-service
+        run: npm test
+
+      - name: 🚀 Déployer Auth Service
+        working-directory: ./auth-service
+        run: |
+          echo "Déploiement du microservice Auth"
+
+  build-and-deploy-analytic-service:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🔁 Checkout du code
+        uses: actions/checkout@v3
+
+      - name: 🚀 Setup Node.js (Version 20.x)
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+
+      - name: 📦 Installer
