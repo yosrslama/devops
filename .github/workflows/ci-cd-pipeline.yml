@@ -3,119 +3,83 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - main
+      - main  # Cette action sera exécutée lors d'un push sur la branche principale
+  pull_request:
+    branches:
+      - main  # Ou lors d'une PR vers la branche principale
 
 jobs:
-  build-and-deploy-user-service:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🔁 Checkout du code
-        uses: actions/checkout@v3
+    # 1. Checkout du code
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: 🚀 Setup Node.js (Version 20.x)
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20.x'
+    # 2. Configurer Docker pour Docker Hub
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: 📦 Installer les dépendances pour User Service
-        working-directory: ./user-service
-        run: npm install
+    # 3. Build et push des images Docker pour chaque service
+    - name: Build and push user-service Docker image
+      run: |
+        docker build -t yosrslama/user-service .
+        docker tag yosrslama/user-service ${{ secrets.DOCKER_USERNAME }}/user-service:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/user-service:latest
 
-      - name: 🧪 Exécuter les tests pour User Service
-        working-directory: ./user-service
-        run: npm test
+    - name: Build and push salle-service Docker image
+      run: |
+        docker build -t yosrslama/salle-service .
+        docker tag yosrslama/salle-service ${{ secrets.DOCKER_USERNAME }}/salle-service:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/salle-service:latest
 
-      - name: 🚀 Déployer User Service
-        working-directory: ./user-service
-        run: |
-          echo "Déploiement du microservice User"
+    - name: Build and push reservation-service Docker image
+      run: |
+        docker build -t yosrslama/reservation-service .
+        docker tag yosrslama/reservation-service ${{ secrets.DOCKER_USERNAME }}/reservation-service:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/reservation-service:latest
 
-  build-and-deploy-salle-service:
+    - name: Build and push auth-service Docker image
+      run: |
+        docker build -t yosrslama/auth-service .
+        docker tag yosrslama/auth-service ${{ secrets.DOCKER_USERNAME }}/auth-service:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/auth-service:latest
+
+    - name: Build and push analytic-service Docker image
+      run: |
+        docker build -t yosrslama/analytic-service .
+        docker tag yosrslama/analytic-service ${{ secrets.DOCKER_USERNAME }}/analytic-service:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/analytic-service:latest
+
+  deploy:
     runs-on: ubuntu-latest
-
+    needs: build  # Cette étape ne s'exécute que si le job 'build' réussit
     steps:
-      - name: 🔁 Checkout du code
-        uses: actions/checkout@v3
+    # 1. Checkout du code
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: 🚀 Setup Node.js (Version 20.x)
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20.x'
+    # 2. Se connecter à Kubernetes (via un secret)
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v2
+      with:
+        kubeconfig: ${{ secrets.KUBECONFIG }}
 
-      - name: 📦 Installer les dépendances pour Salle Service
-        working-directory: ./salle-service
-        run: npm install
+    # 3. Se connecter à Helm
+    - name: Set up Helm
+      uses: deliverybot/helm-action@v1
+      with:
+        helm-version: v3.7.1
 
-      - name: 🧪 Exécuter les tests pour Salle Service
-        working-directory: ./salle-service
-        run: npm test
-
-      - name: 🚀 Déployer Salle Service
-        working-directory: ./salle-service
-        run: |
-          echo "Déploiement du microservice Salle"
-
-  build-and-deploy-reservation-service:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: 🔁 Checkout du code
-        uses: actions/checkout@v3
-
-      - name: 🚀 Setup Node.js (Version 20.x)
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20.x'
-
-      - name: 📦 Installer les dépendances pour Reservation Service
-        working-directory: ./reservation-service
-        run: npm install
-
-      - name: 🧪 Exécuter les tests pour Reservation Service
-        working-directory: ./reservation-service
-        run: npm test
-
-      - name: 🚀 Déployer Reservation Service
-        working-directory: ./reservation-service
-        run: |
-          echo "Déploiement du microservice Reservation"
-
-  build-and-deploy-auth-service:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: 🔁 Checkout du code
-        uses: actions/checkout@v3
-
-      - name: 🚀 Setup Node.js (Version 20.x)
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20.x'
-
-      - name: 📦 Installer les dépendances pour Auth Service
-        working-directory: ./auth-service
-        run: npm install
-
-      - name: 🧪 Exécuter les tests pour Auth Service
-        working-directory: ./auth-service
-        run: npm test
-
-      - name: 🚀 Déployer Auth Service
-        working-directory: ./auth-service
-        run: |
-          echo "Déploiement du microservice Auth"
-
-  build-and-deploy-analytic-service:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: 🔁 Checkout du code
-        uses: actions/checkout@v3
-
-      - name: 🚀 Setup Node.js (Version 20.x)
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20.x'
-
-      - name: 📦 Installer
+    # 4. Déployer les services avec Helm
+    - name: Deploy with Helm
+      run: |
+        helm upgrade --install user-service ./charts/user-service --set image.tag=latest
+        helm upgrade --install salle-service ./charts/salle-service --set image.tag=latest
+        helm upgrade --install reservation-service ./charts/reservation-service --set image.tag=latest
+        helm upgrade --install auth-service ./charts/auth-service --set image.tag=latest
+        helm upgrade --install analytic-service ./charts/analytic-service --set image.tag=latest

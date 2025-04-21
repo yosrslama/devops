@@ -1,0 +1,11 @@
+replicaCount: 1
+
+image:
+  repository: "your-docker-repository"
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+service:
+  name: my-service
+  type: ClusterIP
+  port: 80
